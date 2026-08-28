@@ -162,7 +162,9 @@ function build() {
   const bTop = board.getBoundingClientRect().top;
   const availW = viewW(), availH = viewH() - bTop;
   // board (puzzle target) takes up to 55% of available height
-  BW = Math.min(availW * 0.92, availH * 0.55, 520); BH = BW;
+  BW = Math.min(availW * 0.92, availH * 0.55, 520);
+  BW = Math.floor(BW / N) * N; // whole-number piece size = no hairline gaps
+  BH = BW;
   pw = BW / N; ph = BH / N;
   const bx = (availW - BW) / 2;
   const by = 10;
@@ -174,7 +176,8 @@ function build() {
   // framed board with faint ghost picture as a guide
   const ghost = document.createElement('canvas');
   ghost.width = BW; ghost.height = BH;
-  ghost.style.cssText = `position:absolute;left:${bx}px;top:${by}px;border:6px solid #fff;border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,.3);background:#fff;`;
+  // border adds 6px each side, so offset the frame so its inner edge matches the puzzle area exactly
+  ghost.style.cssText = `position:absolute;left:${bx - 6}px;top:${by - 6}px;border:6px solid #fff;border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,.3);background:#fff;box-sizing:content-box;`;
   const gctx = ghost.getContext('2d');
   gctx.globalAlpha = 0.18;
   gctx.drawImage(img, 0, 0, BW, BH);
@@ -202,7 +205,7 @@ function build() {
     const ctx2 = cv.getContext('2d');
     ctx2.save(); ctx2.translate(margin, margin);
     piecePath(ctx2, pw, ph, E[r][c]);
-    ctx2.strokeStyle = 'rgba(0,0,0,.25)'; ctx2.lineWidth = 1.5; ctx2.stroke();
+    ctx2.strokeStyle = 'rgba(0,0,0,.12)'; ctx2.lineWidth = 1; ctx2.stroke();
     ctx2.restore();
     pieceCanvases.push(cv);
   }
