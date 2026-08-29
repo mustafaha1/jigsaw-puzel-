@@ -93,6 +93,7 @@
       <button data-n="4" class="diffBtn">🙂 Medium 4×4</button>
       <button data-n="5" class="diffBtn">🤓 Hard 5×5</button>
       <hr>
+      <button id="nextBtn">➜ Next Puzzle</button>
       <button id="shuffleBtn">🔀 Shuffle</button>
       <button id="peekBtn">👀 Peek</button>
     </div>
@@ -104,7 +105,10 @@
 <div id="win"><div id="winCard">
   <h2>🎉 You did it! 🎉</h2>
   <p id="winText"></p>
-  <button onclick="hideWin()">Play Again</button>
+  <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap">
+    <button onclick="nextPuzzle()">➜ Next Puzzle</button>
+    <button onclick="hideWin()">🔁 Play Again</button>
+  </div>
 </div></div>
 <div id="gallery"><div id="galCard">
   <h2>⭐ My Gallery</h2>
@@ -322,8 +326,26 @@ document.querySelectorAll('.dropdown button, .dropdown label.fileBtn').forEach(b
   b.addEventListener('click', () => document.querySelectorAll('.menu').forEach(x => x.classList.remove('open')));
 });
 
+// next puzzle: cycle through built-in pictures, then gallery photos
+let curIdx = 0;
+function playlist() { return ['puzzle1.png', 'puzzle2.png', 'puzzle3.png', ...getGallery()]; }
+function nextPuzzle() {
+  document.getElementById('win').classList.remove('show');
+  const list = playlist();
+  curIdx = (curIdx + 1) % list.length;
+  document.querySelectorAll('.imgBtn').forEach(x => x.classList.remove('active'));
+  if (curIdx < 3) {
+    const btn = document.querySelector(`.imgBtn[data-img="${list[curIdx]}"]`);
+    if (btn) btn.classList.add('active');
+  }
+  loadImage(list[curIdx]);
+}
+window.nextPuzzle = nextPuzzle;
+document.getElementById('nextBtn').onclick = nextPuzzle;
+
 // controls
-document.querySelectorAll('.imgBtn').forEach(b => b.onclick = () => {
+document.querySelectorAll('.imgBtn').forEach((b, i) => b.onclick = () => {
+  curIdx = i;
   document.querySelectorAll('.imgBtn').forEach(x => x.classList.remove('active'));
   b.classList.add('active'); loadImage(b.dataset.img);
 });
@@ -377,6 +399,7 @@ function pickPhoto(input) {
   const url = URL.createObjectURL(f);
   document.querySelectorAll('.imgBtn').forEach(x => x.classList.remove('active'));
   pendingSave = true;
+  curIdx = 3; // new photo becomes first gallery item after saving
   loadImage(url);
   input.value = '';
 }
@@ -421,6 +444,7 @@ function showGallery() {
     im.src = url;
     im.onclick = () => {
       document.querySelectorAll('.imgBtn').forEach(x => x.classList.remove('active'));
+      curIdx = 3 + i;
       hideGallery(); loadImage(url);
     };
     const del = document.createElement('button');
