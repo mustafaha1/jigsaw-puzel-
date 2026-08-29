@@ -129,18 +129,20 @@ function edges(n) {
 }
 
 function drawSide(ctx, x1, y1, x2, y2, tab, nx, ny) {
-  // line from (x1,y1) to (x2,y2) with jigsaw bump, normal (nx,ny)
+  // line from (x1,y1) to (x2,y2) with a proper round jigsaw knob, normal (nx,ny)
   if (tab === 0) { ctx.lineTo(x2, y2); return; }
-  const dx = x2 - x1, dy = y2 - y1, t = TAB;
-  const p = (f, o) => [x1 + dx*f + nx*o*t*Math.hypot(dx,dy), y1 + dy*f + ny*o*t*Math.hypot(dx,dy)];
-  const o = tab; // out direction sign
+  const dx = x2 - x1, dy = y2 - y1;
   const L = Math.hypot(dx, dy);
-  ctx.lineTo(x1 + dx*0.35, y1 + dy*0.35);
-  ctx.bezierCurveTo(
-    x1 + dx*0.42 + nx*o*L*t*0.5, y1 + dy*0.42 + ny*o*L*t*0.5,
-    x1 + dx*0.58 + nx*o*L*t*0.5, y1 + dy*0.58 + ny*o*L*t*0.5,
-    x1 + dx*0.65, y1 + dy*0.65
-  );
+  const s = tab * TAB; // knob depth as fraction of edge length
+  const P = (u, v) => [x1 + dx*u + nx*v*L, y1 + dy*u + ny*v*L];
+  let p = P(0.35, 0);
+  ctx.lineTo(p[0], p[1]);
+  // out to the round bulb (control points pull in to form the neck)
+  let c1 = P(0.46, 0), c2 = P(0.34, s), e = P(0.5, s);
+  ctx.bezierCurveTo(c1[0], c1[1], c2[0], c2[1], e[0], e[1]);
+  // back from the bulb to the edge
+  c1 = P(0.66, s); c2 = P(0.54, 0); e = P(0.65, 0);
+  ctx.bezierCurveTo(c1[0], c1[1], c2[0], c2[1], e[0], e[1]);
   ctx.lineTo(x2, y2);
 }
 
@@ -200,7 +202,8 @@ function build() {
     ctx.translate(margin, margin);
     piecePath(ctx, pw, ph, E[r][c]);
     ctx.clip();
-    ctx.drawImage(img, c*sw, r*sh, sw, sh, 0, 0, pw, ph);
+    // draw the whole picture offset to this piece's position, so knobs are filled too
+    ctx.drawImage(img, 0, 0, img.width, img.height, -c*pw, -r*ph, BW, BH);
     // outline
     const ctx2 = cv.getContext('2d');
     ctx2.save(); ctx2.translate(margin, margin);
