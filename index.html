@@ -41,13 +41,16 @@
   canvas.piece { position: absolute; cursor: grab; touch-action: none; filter: drop-shadow(2px 3px 3px rgba(0,0,0,.35)); }
   canvas.piece.dragging { cursor: grabbing; filter: drop-shadow(4px 8px 8px rgba(0,0,0,.45)); }
   #win {
-    position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
-    background: rgba(0,0,0,.45); z-index: 999; flex-direction: column;
+    position: fixed; left: 0; right: 0; bottom: 0; display: none; justify-content: center;
+    z-index: 999; padding: 0 12px 16px; pointer-events: none;
   }
   #win.show { display: flex; }
-  #winCard { background: #fff; border-radius: 24px; padding: 36px 48px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,.4); }
-  #winCard h2 { font-size: 34px; color: #e65100; margin-bottom: 8px; }
-  #winCard p { font-size: 18px; color: #555; margin-bottom: 18px; }
+  #winCard {
+    background: #fff; border-radius: 20px; padding: 16px 20px; text-align: center;
+    box-shadow: 0 10px 40px rgba(0,0,0,.4); pointer-events: auto; max-width: 420px; width: 100%;
+  }
+  #winCard h2 { font-size: 24px; color: #e65100; margin-bottom: 4px; }
+  #winCard p { font-size: 15px; color: #555; margin-bottom: 12px; }
   #gallery {
     position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
     background: rgba(0,0,0,.45); z-index: 998;
@@ -178,9 +181,18 @@ function build() {
   board.innerHTML = ''; pieces = []; done = 0;
   const bTop = board.getBoundingClientRect().top;
   const availW = viewW(), availH = viewH() - bTop;
-  // board (puzzle target) takes up to 55% of available height
+  // size the board so the frame AND the full tray of pieces fit on one screen
   BW = Math.min(availW * 0.92, availH * 0.55, 520);
-  BW = Math.floor(BW / N) * N; // whole-number piece size = no hairline gaps
+  while (BW > 180) {
+    BW = Math.floor(BW / N) * N;
+    const tpw = BW / N, tm = Math.ceil(tpw * TAB) + 4;
+    const tcw = tpw + tm * 2;
+    const cols = Math.max(1, Math.floor(availW / tcw) || 1);
+    const rows = Math.ceil(N * N / cols);
+    const needed = 10 + BW + 8 + rows * tcw + 6;
+    if (needed <= availH) break;
+    BW -= N; // shrink one pixel per piece and retry
+  }
   BH = BW;
   pw = BW / N; ph = BH / N;
   const bx = (availW - BW) / 2;
